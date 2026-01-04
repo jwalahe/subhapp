@@ -2,13 +2,19 @@
 //  OnboardingContainerView.swift
 //  subhapp
 //
-//  Onboarding Flow - Fabulous-inspired emotional journey
+//  Onboarding Flow - Fabulous-inspired 5-page emotional journey
 //
 
 import SwiftUI
 
 struct OnboardingContainerView: View {
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
+    @AppStorage("userName") private var userName = ""
+
+    @State private var currentPage = 0
+    @State private var localUserName = ""
+
+    private let totalPages = 5
 
     var body: some View {
         ZStack {
@@ -20,36 +26,71 @@ struct OnboardingContainerView: View {
             )
             .ignoresSafeArea()
 
-            VStack(spacing: Spacing.xl) {
+            // Page content
+            TabView(selection: $currentPage) {
+                // Page 1: Welcome
+                WelcomeView {
+                    goToNextPage()
+                }
+                .tag(0)
+
+                // Page 2: Name Collection
+                NameCollectionView(name: $localUserName) {
+                    userName = localUserName
+                    goToNextPage()
+                }
+                .tag(1)
+
+                // Page 3: Location Permission
+                LocationPermissionView {
+                    goToNextPage()
+                }
+                .tag(2)
+
+                // Page 4: Notification Permission
+                NotificationPermissionView {
+                    goToNextPage()
+                }
+                .tag(3)
+
+                // Page 5: Commitment
+                CommitmentView(userName: localUserName) {
+                    completeOnboarding()
+                }
+                .tag(4)
+            }
+            .tabViewStyle(.page(indexDisplayMode: .never))
+            .animation(.easeInOut(duration: 0.3), value: currentPage)
+
+            // Progress indicator
+            VStack {
                 Spacer()
 
-                // App icon placeholder
-                Image(systemName: "sun.horizon.fill")
-                    .font(.system(size: 80))
-                    .foregroundStyle(Color.shubhGold)
-                    .shadow(color: Color.shubhGold.opacity(0.5), radius: 20)
-
-                VStack(spacing: Spacing.md) {
-                    Text("Welcome to Shubh")
-                        .font(.shubhLargeTitle)
-                        .foregroundStyle(Color.textPrimary)
-
-                    Text("Your auspicious timing companion")
-                        .font(.shubhBody)
-                        .foregroundStyle(Color.textSecondary)
-                        .multilineTextAlignment(.center)
+                // Progress dots
+                HStack(spacing: Spacing.xs) {
+                    ForEach(0..<totalPages, id: \.self) { index in
+                        Circle()
+                            .fill(index == currentPage ? Color.shubhSaffron : Color.white.opacity(0.3))
+                            .frame(width: index == currentPage ? 10 : 8, height: index == currentPage ? 10 : 8)
+                            .animation(.spring(response: 0.3), value: currentPage)
+                    }
                 }
-
-                Spacer()
-
-                // Temporary: Skip to main app
-                ShubhButton(title: "Get Started") {
-                    hasCompletedOnboarding = true
-                }
-                .padding(.horizontal, Spacing.xl)
-                .padding(.bottom, Spacing.xxl)
+                .padding(.bottom, 120) // Above the button area
             }
         }
+    }
+
+    private func goToNextPage() {
+        withAnimation(.easeInOut(duration: 0.3)) {
+            if currentPage < totalPages - 1 {
+                currentPage += 1
+            }
+        }
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+    }
+
+    private func completeOnboarding() {
+        hasCompletedOnboarding = true
     }
 }
 
