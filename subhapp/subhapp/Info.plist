@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>NSCalendarsUsageDescription</key>
+	<string>Shubh needs calendar access to add auspicious times to your schedule</string>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>Shubh needs calendar access to add auspicious times to your schedule</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Shubh uses your location to calculate accurate panchanga timings for your area</string>
+	<key>NSUserTrackingUsageDescription</key>
+	<string>This helps us improve the app experience</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>remote-notification</string>
+	</array>
+</dict>
+</plist>
