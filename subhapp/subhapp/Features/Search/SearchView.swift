@@ -10,6 +10,9 @@ import SwiftUI
 struct SearchView: View {
     @State private var viewModel = SearchViewModel()
     @FocusState private var isSearchFocused: Bool
+    @State private var showCalendarAlert = false
+    @State private var calendarAlertMessage = ""
+    @State private var calendarAlertIsError = false
 
     var body: some View {
         NavigationStack {
@@ -82,6 +85,11 @@ struct SearchView: View {
                 if viewModel.isSearching {
                     searchingOverlay
                 }
+            }
+            .alert(calendarAlertIsError ? "Error" : "Success", isPresented: $showCalendarAlert) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text(calendarAlertMessage)
             }
         }
     }
@@ -203,8 +211,31 @@ struct SearchView: View {
     }
 
     private func addToCalendar(result: MuhurtaSearchResult) {
-        // TODO: Implement calendar integration in next phase
-        UINotificationFeedbackGenerator().notificationOccurred(.success)
+        Task {
+            do {
+                let success = try await CalendarService.shared.addMuhurtaToCalendar(
+                    date: result.date,
+                    activity: viewModel.selectedActivity,
+                    panchanga: result.panchanga,
+                    score: result.score
+                )
+                await MainActor.run {
+                    if success {
+                        calendarAlertIsError = false
+                        calendarAlertMessage = "Event added to your calendar!"
+                        showCalendarAlert = true
+                        UINotificationFeedbackGenerator().notificationOccurred(.success)
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    calendarAlertIsError = true
+                    calendarAlertMessage = error.localizedDescription
+                    showCalendarAlert = true
+                    UINotificationFeedbackGenerator().notificationOccurred(.error)
+                }
+            }
+        }
     }
 }
 

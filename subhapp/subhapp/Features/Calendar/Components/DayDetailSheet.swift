@@ -12,6 +12,9 @@ struct DayDetailSheet: View {
     let panchanga: Panchanga?
 
     @Environment(\.dismiss) private var dismiss
+    @State private var showCalendarAlert = false
+    @State private var calendarAlertMessage = ""
+    @State private var calendarAlertIsError = false
 
     var body: some View {
         NavigationStack {
@@ -29,6 +32,13 @@ struct DayDetailSheet: View {
 
                         // Favorable activities
                         FavorableActivitiesSection(panchanga: panchanga)
+
+                        // Add to Calendar button
+                        AddToCalendarButton(date: date, panchanga: panchanga) { message, isError in
+                            calendarAlertMessage = message
+                            calendarAlertIsError = isError
+                            showCalendarAlert = true
+                        }
 
                     } else {
                         ProgressView()
@@ -52,6 +62,11 @@ struct DayDetailSheet: View {
         }
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
+        .alert(calendarAlertIsError ? "Error" : "Success", isPresented: $showCalendarAlert) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(calendarAlertMessage)
+        }
     }
 }
 
@@ -302,6 +317,75 @@ struct FavorableActivitiesSection: View {
             }
             .padding(Spacing.cardPadding)
             .glassCard()
+        }
+    }
+}
+
+// MARK: - Add to Calendar Button
+struct AddToCalendarButton: View {
+    let date: Date
+    let panchanga: Panchanga
+    var onResult: (String, Bool) -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Spacing.md) {
+            Text("Add to Calendar")
+                .font(.shubhHeadline)
+                .foregroundStyle(Color.textPrimary)
+
+            VStack(spacing: Spacing.sm) {
+                Button {
+                    addDayToCalendar()
+                } label: {
+                    HStack {
+                        Image(systemName: "calendar.badge.plus")
+                            .font(.system(size: 18))
+
+                        Text("Add This Day's Panchanga")
+                            .font(.shubhSubheadline)
+
+                        Spacer()
+
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 12))
+                            .foregroundStyle(Color.textTertiary)
+                    }
+                    .foregroundStyle(Color.textPrimary)
+                    .padding(Spacing.md)
+                    .background(Color.surfaceElevated)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                }
+
+                Text("Creates an all-day calendar event with panchanga details")
+                    .font(.shubhCaption)
+                    .foregroundStyle(Color.textTertiary)
+            }
+            .padding(Spacing.cardPadding)
+            .glassCard()
+        }
+    }
+
+    private func addDayToCalendar() {
+        Task {
+            do {
+                let success = try await CalendarService.shared.addMuhurtaToCalendar(
+                    date: date,
+                    activity: nil,
+                    panchanga: panchanga,
+                    score: panchanga.overallAuspiciousnessScore
+                )
+                await MainActor.run {
+                    if success {
+                        onResult("Panchanga added to your calendar!", false)
+                        UINotificationFeedbackGenerator().notificationOccurred(.success)
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    onResult(error.localizedDescription, true)
+                    UINotificationFeedbackGenerator().notificationOccurred(.error)
+                }
+            }
         }
     }
 }
