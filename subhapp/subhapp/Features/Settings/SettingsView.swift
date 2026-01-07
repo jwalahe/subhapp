@@ -98,21 +98,20 @@ struct SettingsView: View {
 
                 // Notifications Section
                 Section {
-                    Toggle(isOn: $notificationsEnabled) {
+                    NavigationLink {
+                        NotificationSettingsView()
+                    } label: {
                         HStack {
                             SettingsIcon(systemName: "bell.fill", color: .shubhSaffron)
-                            Text("Daily Summary")
-                                .font(.shubhBody)
-                        }
-                    }
-                    .tint(Color.shubhSaffron)
 
-                    if notificationsEnabled {
-                        Stepper(value: $morningNotificationHour, in: 5...10) {
-                            HStack {
-                                SettingsIcon(systemName: "clock.fill", color: .shubhGold)
-                                Text("Notify at \(morningNotificationHour):00 AM")
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Notifications")
                                     .font(.shubhBody)
+                                    .foregroundStyle(Color.textPrimary)
+
+                                Text(notificationsEnabled ? "Daily summary enabled" : "Disabled")
+                                    .font(.shubhCaption)
+                                    .foregroundStyle(Color.textSecondary)
                             }
                         }
                     }
